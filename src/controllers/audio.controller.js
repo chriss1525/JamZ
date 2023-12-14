@@ -1,24 +1,22 @@
-// Post controller for audio reception and processing
+// audio separation
 
-const multer = require('multer');
-const express = require('express');
-const router = express.Router();
+const { exec } = require('child_process');
 
-// Multer configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'audio/')
-  }
-});
-const upload = multer({ storage: storage });
+const demucsController = {
+  separateAudio: (file, outputFolder) => {
+    return new Promise((resolve, reject) => {
+      // Run the Demucs script on the MP3 file
+      exec(`python3.8 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('Error processing audio', error);
+          reject('Error processing audio');
+        } else {
+          resolve('Success');
+        }
+      });
+    });
+  },
+};
 
-// Post controller for audio reception
-const audioprocessor = {
-  post: function(req, res) {
-    const audioBuffer = req.file.buffer;
+module.exports = demucsController;
 
-
-  }
-
-
-}
