@@ -1,21 +1,14 @@
 // root of my JamZ application
 
+// server.js
+
 const express = require('express');
-const bodyParser = require('body-parser');
+const routes = require('./routes/index');
 
 const app = express();
 const port = 3000;
 
-// middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(routes);
 
-// routes
-app.get('/', (req, res) => {
-  res.send('JamZ is running');
-});
+app.listen(port, () => console.log(`Server listening on port ${port}!`));
 
-// listen
-app.listen(port, () => {
-  console.log(`JamZ is listening on port ${port}`);
-});
