@@ -2,7 +2,9 @@
 
 ## Overview
 
-Audio Separation API is a Node.js application that provides a basic framework for processing audio, specifically separating vocals from music tracks.
+JamZ API is a Node.js application that provides a basic framework for processing audio, specifically separating vocals from music tracks.
+
+Jamz also stores both the vocals of the song and the instrumentals.
 
 ## Getting Started
 
