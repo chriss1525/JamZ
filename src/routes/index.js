@@ -56,7 +56,6 @@ router.get('/api/JamZ/:filename', async (req, res) => {
     const audioFile = await demucsController.getAudioFile(req.params.filename);
     return res.status(200).send(audioFile);
   } catch (error) {
-    console.error('Error:', error);
     return res.status(500).send('Error getting audio file');
   }
 });

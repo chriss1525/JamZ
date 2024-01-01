@@ -116,12 +116,10 @@ const demucsController = {
 
       // Fetch the details of the audio file
       const audioDetails = await demucsController.getAudioFile(filename);
-      console.log('Audio Details:', audioDetails);
 
       if (audioDetails && audioDetails.length > 0) {
         // Get the vocal path from the details
         const noVocalPath = audioDetails[0].novocalpath;
-        console.log('No Vocal Path:', noVocalPath);
 
         // Ensure that the file exists
         if (fs.existsSync(noVocalPath)) {
@@ -130,15 +128,6 @@ const demucsController = {
 
           // Stream the audio to the client
           const stream = fs.createReadStream(noVocalPath);
-          stream.on('open', () => {
-            console.log('Stream opened');
-          });
-          stream.on('end', () => {
-            console.log('Stream ended');
-          });
-          stream.on('error', (err) => {
-            console.error('Stream error:', err);
-          });
           stream.pipe(res);
         } else {
           res.status(404).json({ error: 'No Vocal File not found' });
@@ -147,7 +136,6 @@ const demucsController = {
         res.status(404).json({ error: 'Audio Details not found' });
       }
     } catch (err) {
-      console.error('Error getting audio:', err.message);
       res.status(500).json({ error: 'Failed to get audio' });
     }
   },
