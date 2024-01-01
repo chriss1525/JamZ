@@ -11,7 +11,6 @@ const demucsController = {
       await new Promise((resolve, reject) => {
         exec(`python3.8 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
-            console.error('Error processing audio', error);
             reject('Error processing audio');
           } else {
             resolve('Success');
@@ -35,14 +34,11 @@ const demucsController = {
         }]);
 
       if (error) {
-        console.error('Error inserting into the database', error);
         throw new Error('Error inserting into the database');
       }
 
-      console.log('Database insertion successful', data);
       return 'Success';
     } catch (err) {
-      console.error('Error in separateAudio:', err);
       throw err;
     }
   },
@@ -55,13 +51,11 @@ const demucsController = {
         .select('*');
 
       if (error) {
-        console.error('Error getting audio files', error);
         throw new Error('Error getting audio files');
       }
 
       return data;
     } catch (err) {
-      console.error('Error in getAudioFiles:', err);
       throw err;
     }
   },
@@ -75,13 +69,11 @@ const demucsController = {
         .eq('title', filename);
 
       if (error) {
-        console.error('Error getting audio file', error);
         throw new Error('Error getting audio file');
       }
 
       return data;
     } catch (err) {
-      console.error('Error in getAudioFile:', err);
       throw err;
     }
   },
@@ -93,12 +85,10 @@ const demucsController = {
 
       // Fetch the details of the audio file
       const audioDetails = await demucsController.getAudioFile(filename);
-      console.log('Audio Details:', audioDetails);
 
       if (audioDetails && audioDetails.length > 0) {
         // Get the vocal path from the details
         const vocalPath = audioDetails[0].vocalpath;
-        console.log('Vocal Path:', vocalPath);
 
         // Ensure that the file exists
         if (fs.existsSync(vocalPath)) {
@@ -107,15 +97,6 @@ const demucsController = {
 
           // Stream the audio to the client
           const stream = fs.createReadStream(vocalPath);
-          stream.on('open', () => {
-            console.log('Stream opened');
-          });
-          stream.on('end', () => {
-            console.log('Stream ended');
-          });
-          stream.on('error', (err) => {
-            console.error('Stream error:', err);
-          });
           stream.pipe(res);
         } else {
           res.status(404).json({ error: 'Vocal File not found' });
@@ -124,7 +105,6 @@ const demucsController = {
         res.status(404).json({ error: 'Audio Details not found' });
       }
     } catch (err) {
-      console.error('Error getting audio:', err.message);
       res.status(500).json({ error: 'Failed to get audio' });
     }
   },
