@@ -1,10 +1,9 @@
-// demucsRoutes.js
-
 const express = require('express');
 const multer = require('multer');
 const demucsController = require('../controllers/audio.controller');
 
 const router = express.Router();
+const path = require('path'); // Import path module for joining paths
 const storage = multer.diskStorage({
   destination: './uploads',
   filename(req, file, cb) {
@@ -52,9 +51,9 @@ router.get('/api/JamZ/', async (req, res) => {
 });
 
 // get audio file by id
-router.get('/api/JamZ/:id', async (req, res) => {
+router.get('/api/JamZ/:filename', async (req, res) => {
   try {
-    const audioFile = await demucsController.getAudioFile(req.params.id);
+    const audioFile = await demucsController.getAudioFile(req.params.filename);
     return res.status(200).send(audioFile);
   } catch (error) {
     console.error('Error:', error);
@@ -62,16 +61,7 @@ router.get('/api/JamZ/:id', async (req, res) => {
   }
 });
 
-// get audio file by path
-router.get('/api/JamZ/:path', async (req, res) => {
-  try {
-    const audioFile = await demucsController.getAudioFileByPath(req.params.path);
-    return res.status(200).send(audioFile);
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).send('Error getting audio file');
-  }
-});
+// play vocal audio file
+router.get('/api/JamZ/play/:filename', demucsController.getVocal);
 
 module.exports = router;
-

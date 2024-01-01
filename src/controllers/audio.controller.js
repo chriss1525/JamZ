@@ -2,6 +2,7 @@
 
 const { exec } = require('child_process');
 const supabase = require('../../utils/db');
+const fs = require('fs');
 
 const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
@@ -19,17 +20,19 @@ const demucsController = {
       });
 
       // get the paths of the separated audio
-      const vocalPath = `./${outputFolder}/${file.split('.')[0]}_vocals.mp3`;
-      const noVocalPath = `./${outputFolder}/${file.split('.')[0]}_no_vocals.mp3`;
+      const path = require('path');
+      const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
+      const noVocalPath = `./${outputFolder}/${file.split('.')[0]}_no_vocals.mp3`.replace('././', './');
+
 
       // add the separated audio to the database
       const { data, error } = await supabase
         .from('Song')
-        .upsert({
+        .insert([{
           title: req.body.title,
           vocalpath: vocalPath,
           novocalpath: noVocalPath,
-        });
+        }]);
 
       if (error) {
         console.error('Error inserting into the database', error);
@@ -63,13 +66,13 @@ const demucsController = {
     }
   },
 
-  // get audio file by id
-  getAudioFile: async (id) => {
+  // get a specific audio details by filename
+  getAudioFile: async (filename) => {
     try {
       const { data, error } = await supabase
         .from('Song')
         .select('*')
-        .eq('id', id);
+        .eq('title', filename);
 
       if (error) {
         console.error('Error getting audio file', error);
@@ -83,27 +86,49 @@ const demucsController = {
     }
   },
 
-  // play audio file by path
-  playAudioFile: async (path) => {
+  // play a specific vocal audio file 
+  getVocal: async (req, res) => {
     try {
-      // play the audio file
-      await new Promise((resolve, reject) => {
-        exec(`ffplay ${path}`, (error, stdout, stderr) => {
-          if (error) {
-            console.error('Error playing audio', error);
-            reject('Error playing audio');
-          } else {
-            resolve('Success');
-          }
-        });
-      });
+      const filename = req.params.filename;
 
-      return 'Success';
+      // Fetch the details of the audio file
+      const audioDetails = await demucsController.getAudioFile(filename);
+      console.log('Audio Details:', audioDetails);
+
+      if (audioDetails && audioDetails.length > 0) {
+        // Get the vocal path from the details
+        const vocalPath = audioDetails[0].vocalpath;
+        console.log('Vocal Path:', vocalPath);
+
+        // Ensure that the file exists
+        if (fs.existsSync(vocalPath)) {
+          // set the appropriate content type
+          res.setHeader('Content-Type', 'audio/mp3');
+
+          // Stream the audio to the client
+          const stream = fs.createReadStream(vocalPath);
+          stream.on('open', () => {
+            console.log('Stream opened');
+          });
+          stream.on('end', () => {
+            console.log('Stream ended');
+          });
+          stream.on('error', (err) => {
+            console.error('Stream error:', err);
+          });
+          stream.pipe(res);
+        } else {
+          res.status(404).json({ error: 'Vocal File not found' });
+        }
+      } else {
+        res.status(404).json({ error: 'Audio Details not found' });
+      }
     } catch (err) {
-      console.error('Error in playAudioFile:', err);
-      throw err;
+      console.error('Error getting audio:', err.message);
+      res.status(500).json({ error: 'Failed to get audio' });
     }
-  }
-};
+  },
+ };
+
 
 module.exports = demucsController;
