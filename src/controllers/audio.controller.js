@@ -22,7 +22,7 @@ const demucsController = {
       // get the paths of the separated audio
       const path = require('path');
       const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
-      const noVocalPath = `./${outputFolder}/${file.split('.')[0]}_no_vocals.mp3`.replace('././', './');
+      const noVocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/no_vocals.mp3`);
 
 
       // add the separated audio to the database
@@ -119,6 +119,49 @@ const demucsController = {
           stream.pipe(res);
         } else {
           res.status(404).json({ error: 'Vocal File not found' });
+        }
+      } else {
+        res.status(404).json({ error: 'Audio Details not found' });
+      }
+    } catch (err) {
+      console.error('Error getting audio:', err.message);
+      res.status(500).json({ error: 'Failed to get audio' });
+    }
+  },
+
+  // play a specific no vocal audio file
+  getNoVocal: async (req, res) => {
+    try {
+      const filename = req.params.filename;
+
+      // Fetch the details of the audio file
+      const audioDetails = await demucsController.getAudioFile(filename);
+      console.log('Audio Details:', audioDetails);
+
+      if (audioDetails && audioDetails.length > 0) {
+        // Get the vocal path from the details
+        const noVocalPath = audioDetails[0].novocalpath;
+        console.log('No Vocal Path:', noVocalPath);
+
+        // Ensure that the file exists
+        if (fs.existsSync(noVocalPath)) {
+          // set the appropriate content type
+          res.setHeader('Content-Type', 'audio/mp3');
+
+          // Stream the audio to the client
+          const stream = fs.createReadStream(noVocalPath);
+          stream.on('open', () => {
+            console.log('Stream opened');
+          });
+          stream.on('end', () => {
+            console.log('Stream ended');
+          });
+          stream.on('error', (err) => {
+            console.error('Stream error:', err);
+          });
+          stream.pipe(res);
+        } else {
+          res.status(404).json({ error: 'No Vocal File not found' });
         }
       } else {
         res.status(404).json({ error: 'Audio Details not found' });
