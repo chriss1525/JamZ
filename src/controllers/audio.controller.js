@@ -13,7 +13,7 @@ const demucsController = {
 
       // Run the Demucs script on the MP3 file
       await new Promise((resolve, reject) => {
-        exec(`python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
+        exec(`/usr/bin/python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
             console.error('Demucs Error:', error);
             console.error('Demucs Stderr:', stderr);
