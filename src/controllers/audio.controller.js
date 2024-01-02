@@ -4,6 +4,30 @@ const { exec } = require('child_process');
 const supabase = require('../../utils/db');
 const fs = require('fs');
 
+const isDemucsInstalled = async () => {
+  return new Promise((resolve, reject) => {
+    exec('/usr/bin/python3 -m pip show demucs', (error, stdout, stderr) => {
+      if (error) {
+        reject(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
+const installDemucs = async () => {
+  return new Promise((resolve, reject) => {
+    exec('/usr/bin/python3 -m pip install demucs', (error, stdout, stderr) => {
+      if (error) {
+        reject('Error installing demucs');
+      } else {
+        resolve('Demucs installation successful');
+      }
+    });
+  });
+};
+
 const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
     try {
@@ -11,7 +35,19 @@ const demucsController = {
       console.log('File:', file);
       console.log('Output Folder:', outputFolder);
 
-      // Run the Demucs script on the MP3 file
+      // Check if demucs is already installed
+      const isInstalled = await isDemucsInstalled();
+
+      if (!isInstalled) {
+        // If not installed, install demucs
+        console.log('Installing demucs...');
+        const installResult = await installDemucs();
+        console.log(installResult);
+      } else {
+        console.log('Demucs is already installed.');
+      }
+
+      // Now run the Demucs script
       await new Promise((resolve, reject) => {
         exec(`/usr/bin/python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
