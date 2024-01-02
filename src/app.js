@@ -7,7 +7,7 @@ const routes = require('./routes/index');
 
 require('dotenv').config();
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(routes);
 app.get('/', (req, res) => res.send('Jamz is running!'));

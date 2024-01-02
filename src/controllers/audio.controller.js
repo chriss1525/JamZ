@@ -7,13 +7,19 @@ const fs = require('fs');
 const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
     try {
+      console.log('Separating audio...');
+      console.log('File:', file);
+      console.log('Output Folder:', outputFolder);
+
       // Run the Demucs script on the MP3 file
       await new Promise((resolve, reject) => {
         exec(`python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
-            console.log(error);
+            console.error('Demucs Error:', error);
+            console.error('Demucs Stderr:', stderr);
             reject('Error processing audio');
           } else {
+            console.log('Demucs Success:', stdout);
             resolve('Success');
           }
         });
@@ -24,6 +30,8 @@ const demucsController = {
       const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
       const noVocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/no_vocals.mp3`);
 
+      console.log('Vocal Path:', vocalPath);
+      console.log('No Vocal Path:', noVocalPath);
 
       // add the separated audio to the database
       const { data, error } = await supabase
@@ -35,14 +43,19 @@ const demucsController = {
         }]);
 
       if (error) {
+        console.error('Database Insert Error:', error);
         throw new Error('Error inserting into the database');
       }
 
+      console.log('Database Insert Success:', data);
+
       return 'Success';
     } catch (err) {
+      console.error('Separate Audio Error:', err);
       throw err;
     }
   },
+
 
   // get all audio files
   getAudioFiles: async () => {
