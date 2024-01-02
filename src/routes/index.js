@@ -11,7 +11,6 @@ const storage = multer.diskStorage({
     const fileNameWithoutExtension = file.originalname.split('.')[0];
     const title = fileNameWithoutExtension.replace(/-/g, ' '); // Replace underscores with spaces
     req.body.title = title;
-    console.log('Title:', title)
 
     cb(null, `${file.fieldname}-${Date.now()}`);
   }
