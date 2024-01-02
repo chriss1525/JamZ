@@ -11,6 +11,7 @@ const demucsController = {
       await new Promise((resolve, reject) => {
         exec(`python3.8 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
+            console.log(error);
             reject('Error processing audio');
           } else {
             resolve('Success');
