@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "python3 -m pip install -U demucs",
     "start": "node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
