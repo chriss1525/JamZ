@@ -60,9 +60,12 @@ router.get('/api/JamZ/:filename', async (req, res) => {
 });
 
 // play vocal audio file
-router.get('/api/JamZ/vocals/:filename', demucsController.getVocal);
+router.get('/api/JamZ/vocal/:filename', demucsController.getVocal);
 
 // play instrumental audio file
 router.get('/api/JamZ/instrumental/:filename', demucsController.getNoVocal);
+
+// play original audio file
+router.get('/api/JamZ/original/:filename', demucsController.getUpload);
 
 module.exports = router;

@@ -4,52 +4,14 @@ const { exec } = require('child_process');
 const supabase = require('../../utils/db');
 const fs = require('fs');
 
-const isDemucsInstalled = async () => {
-  return new Promise((resolve, reject) => {
-    exec('/usr/bin/python3 -m pip show demucs', (error, stdout, stderr) => {
-      if (error) {
-        reject(false);
-      } else {
-        resolve(true);
-      }
-    });
-  });
-};
-
-const installDemucs = async () => {
-  return new Promise((resolve, reject) => {
-    exec('/usr/bin/python3 -m pip install demucs', (error, stdout, stderr) => {
-      if (error) {
-        reject('Error installing demucs');
-      } else {
-        resolve('Demucs installation successful');
-      }
-    });
-  });
-};
-
 const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
     try {
       console.log('Separating audio...');
-      console.log('File:', file);
-      console.log('Output Folder:', outputFolder);
-
-      // Check if demucs is already installed
-      const isInstalled = await isDemucsInstalled();
-
-      if (!isInstalled) {
-        // If not installed, install demucs
-        console.log('Installing demucs...');
-        const installResult = await installDemucs();
-        console.log(installResult);
-      } else {
-        console.log('Demucs is already installed.');
-      }
 
       // Now run the Demucs script
       await new Promise((resolve, reject) => {
-        exec(`/usr/bin/python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
+        exec(`python3.8 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
             console.error('Demucs Error:', error);
             console.error('Demucs Stderr:', stderr);
@@ -63,6 +25,8 @@ const demucsController = {
 
       // get the paths of the separated audio
       const path = require('path');
+      const upload = path.resolve(__dirname, '../../', file);
+      console.log('Upload Path:', upload);
       const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
       const noVocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/no_vocals.mp3`);
 
@@ -74,6 +38,7 @@ const demucsController = {
         .from('Song')
         .insert([{
           title: req.body.title,
+          uploadpath: upload,
           vocalpath: vocalPath,
           novocalpath: noVocalPath,
         }]);
@@ -181,6 +146,37 @@ const demucsController = {
           stream.pipe(res);
         } else {
           res.status(404).json({ error: 'No Vocal File not found' });
+        }
+      } else {
+        res.status(404).json({ error: 'Audio Details not found' });
+      }
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to get audio' });
+    }
+  },
+
+  // get an uploaded audio file
+  getUpload: async (req, res) => {
+    try {
+      const filename = req.params.filename;
+
+      // Fetch the details of the audio file
+      const audioDetails = await demucsController.getAudioFile(filename);
+
+      if (audioDetails && audioDetails.length > 0) {
+        // Get the vocal path from the details
+        const uploadPath = audioDetails[0].uploadpath;
+
+        // Ensure that the file exists
+        if (fs.existsSync(uploadPath)) {
+          // set the appropriate content type
+          res.setHeader('Content-Type', 'audio/mp3');
+
+          // Stream the audio to the client
+          const stream = fs.createReadStream(uploadPath);
+          stream.pipe(res);
+        } else {
+          res.status(404).json({ error: 'Upload File not found' });
         }
       } else {
         res.status(404).json({ error: 'Audio Details not found' });
