@@ -8,8 +8,7 @@ const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
     try {
       console.log('Separating audio...');
-
-      // Now run the Demucs script
+      // separate the audio
       await new Promise((resolve, reject) => {
         exec(`python3.8 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
@@ -26,12 +25,9 @@ const demucsController = {
       // get the paths of the separated audio
       const path = require('path');
       const upload = path.resolve(__dirname, '../../', file);
-      console.log('Upload Path:', upload);
       const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
       const noVocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/no_vocals.mp3`);
 
-      console.log('Vocal Path:', vocalPath);
-      console.log('No Vocal Path:', noVocalPath);
 
       // add the separated audio to the database
       const { data, error } = await supabase
