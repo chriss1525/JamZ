@@ -3,124 +3,41 @@
 const { exec } = require('child_process');
 const supabase = require('../../utils/db');
 const fs = require('fs');
-const path = require('path');
-
-
-// concatenate audio chunks
 
 const demucsController = {
   separateAudio: async (file, outputFolder, req) => {
     try {
       console.log('Separating audio...');
-
-      // Create the output directory for chunks if it doesn't exist
-      const chunkFolder = path.resolve(__dirname, '../../', outputFolder, 'chunks');
-      if (!fs.existsSync(chunkFolder)) {
-        fs.mkdirSync(chunkFolder, { recursive: true });
-      }
-
-      // Split the audio into 0.5-second chunks
+      // separate the audio
       await new Promise((resolve, reject) => {
-        exec(`ffmpeg -i ${file} -f segment -segment_time 0.5 -c copy ${chunkFolder}/chunk_%03d.mp3`, (error, stdout, stderr) => {
+        exec(`python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${file} --out ./${outputFolder}`, (error, stdout, stderr) => {
           if (error) {
-            console.error('FFmpeg Error:', error);
-            console.error('FFmpeg Stderr:', stderr);
-            reject('Error splitting audio into chunks');
+            console.error('Demucs Error:', error);
+            console.error('Demucs Stderr:', stderr);
+            reject('Error processing audio');
           } else {
-            console.log('FFmpeg Success:', stdout);
+            console.log('Demucs Success:', stdout);
             resolve('Success');
           }
         });
       });
 
-      // Process each chunk with Demucs
-      const processedChunks = [];
-      const chunkFiles = fs.readdirSync(chunkFolder);
-      for (const chunkFile of chunkFiles) {
-        const chunkPath = path.resolve(chunkFolder, chunkFile);
-        const outputFolderName = chunkFile.replace('.mp3', '');
-        const outputPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${outputFolderName}`);
-
-        // Separate the audio with Demucs
-        await new Promise((resolve, reject) => {
-          exec(`python3 -m demucs.separate --mp3 --two-stems vocals -n mdx_extra ${chunkPath} --out ${outputPath}`, (error, stdout, stderr) => {
-            if (error) {
-              console.error('Demucs Error:', error);
-              console.error('Demucs Stderr:', stderr);
-              reject(`Error processing audio chunk ${chunkFile}`);
-            } else {
-              console.log(`Demucs Success for chunk ${chunkFile}:`, stdout);
-              processedChunks.push(outputPath);
-              resolve('Success');
-            }
-          });
-        });
-      }
-
-      // Concatenate processed chunks
-      const concatenatedVocalPath = path.resolve(__dirname, '../../', outputFolder, 'concatenated_output_vocal.mp3');
-      const concatenatedNoVocalPath = path.resolve(__dirname, '../../', outputFolder, 'concatenated_output_no_vocal.mp3');
-      const concatInputFileVocal = path.resolve(__dirname, '../../', outputFolder, 'concat_input_vocal.txt');
-      const concatInputFileNoVocal = path.resolve(__dirname, '../../', outputFolder, 'concat_input_no_vocal.txt');
-
-      // Corrected paths for vocal and no vocal
-      const correctedVocalPaths = processedChunks.map(chunk => [
-        `file '${path.join(chunk, 'mdx_extra', path.basename(chunk), 'vocals.mp3')}'`
-      ]);
-      const correctedNoVocalPaths = processedChunks.map(chunk => [
-        `file '${path.join(chunk, 'mdx_extra', path.basename(chunk), 'no_vocals.mp3')}'`
-      ]);
-
-      fs.writeFileSync(concatInputFileVocal, correctedVocalPaths.join('\n'));
-      fs.writeFileSync(concatInputFileNoVocal, correctedNoVocalPaths.join('\n'));
-
-      await new Promise((resolve, reject) => {
-        exec(`ffmpeg -f concat -safe 0 -i ${concatInputFileVocal} -c copy ${concatenatedVocalPath}`, (error, stdout, stderr) => {
-          if (error) {
-            console.error('FFmpeg Concatenation Error (Vocal):', error);
-            console.error('FFmpeg Concatenation Stderr (Vocal):', stderr);
-            reject('Error concatenating vocal processed chunks');
-          } else {
-            console.log('FFmpeg Concatenation Success (Vocal):', stdout);
-            resolve('Success');
-          }
-        });
-      });
-
-      await new Promise((resolve, reject) => {
-        exec(`ffmpeg -f concat -safe 0 -i ${concatInputFileNoVocal} -c copy ${concatenatedNoVocalPath}`, (error, stdout, stderr) => {
-          if (error) {
-            console.error('FFmpeg Concatenation Error (No Vocal):', error);
-            console.error('FFmpeg Concatenation Stderr (No Vocal):', stderr);
-            reject('Error concatenating no vocal processed chunks');
-          } else {
-            console.log('FFmpeg Concatenation Success (No Vocal):', stdout);
-            resolve('Success');
-          }
-        });
-      });
-
-      // Delete intermediate files and mdx_extra folder
-      fs.unlinkSync(concatInputFileVocal);
-      fs.unlinkSync(concatInputFileNoVocal);
-      fs.rmdirSync(chunkFolder, { recursive: true });
-
-      // Get the paths of the separated audio
+      // get the paths of the separated audio
+      const path = require('path');
       const upload = path.resolve(__dirname, '../../', file);
-      const vocalPath = concatenatedVocalPath;
-      const noVocalPath = concatenatedNoVocalPath;
+      const vocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/vocals.mp3`);
+      const noVocalPath = path.resolve(__dirname, '../../', outputFolder, `mdx_extra/${file.replace('uploads/', '').split('.')[0]}/no_vocals.mp3`);
 
-      // Add the separated audio to the database
+
+      // add the separated audio to the database
       const { data, error } = await supabase
         .from('Song')
-        .insert([
-          {
-            title: req.body.title,
-            uploadpath: upload,
-            vocalpath: vocalPath,
-            novocalpath: noVocalPath,
-          },
-        ]);
+        .insert([{
+          title: req.body.title,
+          uploadpath: upload,
+          vocalpath: vocalPath,
+          novocalpath: noVocalPath,
+        }]);
 
       if (error) {
         console.error('Database Insert Error:', error);
@@ -135,6 +52,7 @@ const demucsController = {
       throw err;
     }
   },
+
 
   // get all audio files
   getAudioFiles: async () => {
@@ -153,7 +71,6 @@ const demucsController = {
     }
   },
 
-  // play a specific vocal audio file 
   // get a specific audio details by filename
   getAudioFile: async (filename) => {
     try {
