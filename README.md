@@ -1,54 +1,29 @@
-# JamZ API
+# JamZ Audio Processing API
 
-## Overview
 
-JamZ API is a Node.js application that provides a basic framework for processing audio, specifically separating vocals from music tracks.
+The JamZ Audio Processing API allows users to seamlessly integrate audio separation and database management into their applications. Leveraging the Demucs audio separation library and Supabase database, this API enables users to perform the following actions:
 
-Jamz also stores both the vocals of the song and the instrumentals.
+- Separate Audio: Utilize the powerful Demucs script to separate audio files into vocal and instrumental components. The processed audio is stored in the Supabase database, allowing efficient retrieval.
+- Get All Audio Files: Retrieve a list of all audio files stored in the Supabase database, providing a comprehensive overview of available content.
+- Get Audio File Details: Obtain detailed information about a specific audio file by specifying the filename, facilitating targeted data retrieval.
+- Get Vocal Audio: Stream the vocal component of a specific audio file to the client, allowing users to access and play the isolated vocal track.
+- Get No Vocal Audio: Stream the instrumental component (no vocal) of a specific audio file to the client, providing flexibility in audio playback options.
 
-## Getting Started
+## Documentation
 
-### Prerequisites
+Explore the API endpoints and detailed information on request parameters and response structures in the [JamZ API Documentation](https://documenter.getpostman.com/view/29473948/2s9YsDmFey).
 
-- Node.js (https://nodejs.org/)
-- npm (Node Package Manager, comes with Node.js)
+## Usage Guidelines:
 
-### Installation
+- Use the provided endpoints for seamless audio processing and retrieval.
+- Refer to the documentation for detailed information on request parameters and response structures.
 
-1. Clone the repository:
 
-   ```bash
-   git clone https://github.com/your-username/audio-separation-api.git
-   ```
+Note: This collection is designed for music enthusiasts, developers, and applications that require advanced audio processing capabilities. Make the most of the Demucs audio separation and Supabase database integration to enhance your audio-related projects.
 
-2. Navigate to the project directory:
-
-  ```bash
-  cd JamZ
-  ```
-
-3. Install dependencies:
-
-  ```bash
-  npm install
-  ```
-
-### Usage
-
-1. Start the server:
-
-  ```bash
-  node src/app.js
-  ```
-
-  The server will be running at http://localhost:3000.
-
-2. Open your browser or a tool like Postman and visit http://localhost:3000 to ensure the server is up and running.
-
-### API Endpoints
-
-GET /: Test route to check if the API is running.
-
-### Contributing
+## Contribution
 
 Contributions are welcome! If you find a bug or have an idea for improvement, please open an issue or submit a pull request.
+
+
+
